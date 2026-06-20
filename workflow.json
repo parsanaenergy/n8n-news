@@ -130,7 +130,10 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ `INSERT INTO ai_news_queue (link, company, title, ai_summary, status) VALUES ('${$json.link.replace(/'/g, \"''\")}', '${$json.company.replace(/'/g, \"''\")}', '${$json.title.replace(/'/g, \"''\")}', '${$json.ai_summary.replace(/'/g, \"''\")}', 'pending') ON CONFLICT (link) DO NOTHING;` }}"
+        "query": "INSERT INTO ai_news_queue (link, company, title, ai_summary, status) VALUES ($1, $2, $3, $4, 'pending') ON CONFLICT (link) DO NOTHING;",
+        "options": {
+          "queryParameters": "={{ [$json.link, $json.company, $json.title, $json.ai_summary] }}"
+        }
       },
       "credentials": {
         "postgres": {
@@ -221,7 +224,10 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ `UPDATE ai_news_queue SET status = 'published' WHERE link = '${$json.link.replace(/'/g, \"''\")}';` }}"
+        "query": "UPDATE ai_news_queue SET status = 'published' WHERE link = $1;",
+        "options": {
+          "queryParameters": "={{ [$json.link] }}"
+        }
       },
       "credentials": {
         "postgres": {
