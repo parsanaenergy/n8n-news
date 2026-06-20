@@ -1,0 +1,24 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "run_eval.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/parsanaenergy/n8n-news.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/parsanaenergy/n8n-news/issues"
+  },
+  "homepage": "https://github.com/parsanaenergy/n8n-news#readme",
+  "devDependencies": {
+    "jest": "^30.4.2"
+  }
+}
