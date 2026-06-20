@@ -200,14 +200,25 @@
     },
     {
       "name": "Send to Telegram",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
       "position": [
         600,
         400
       ],
       "parameters": {
-        "jsCode": "const summary = $json.ai_summary;\nawait this.helpers.httpRequest({ \n  method: 'POST', \n  url: 'https://api.telegram.org/bot8453602531:AAGmzqyUspjIA9BDFFfUC-4DeIwZu-eYVQY/sendMessage', \n  body: { \n    chat_id: '-1002176426998', \n    text: summary, \n    parse_mode: 'HTML', \n    disable_web_page_preview: true \n  },\n  json: true \n});\nreturn [{json: $json}];"
+        "chatId": "-1002176426998",
+        "text": "={{ $json.ai_summary }}",
+        "additionalFields": {
+          "parse_mode": "HTML",
+          "disable_web_page_preview": true
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram_api_credentials",
+          "name": "Telegram account"
+        }
       },
       "continueOnFail": true
     },
