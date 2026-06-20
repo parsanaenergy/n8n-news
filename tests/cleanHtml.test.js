@@ -1,42 +1,47 @@
 const fs = require('fs');
-const test = require('node:test');
-const assert = require('node:assert');
+const path = require('path');
+const vm = require('vm');
 
-const workflowStr = fs.readFileSync('workflow.json', 'utf8');
-const workflow = JSON.parse(workflowStr);
+describe('cleanHtml tests', () => {
+  const workflowPath = path.join(__dirname, '..', 'workflow.json');
+  const workflowStr = fs.readFileSync(workflowPath, 'utf8');
+  const workflow = JSON.parse(workflowStr);
+  const codeNode = workflow.nodes.find(n => n.name === 'Fetch & Parse RSS Feeds');
+  const jsCode = codeNode.parameters.jsCode;
 
-const codeNode = workflow.nodes.find(n => n.name === 'Fetch & Parse RSS Feeds');
-const jsCode = codeNode.parameters.jsCode;
+  const functionMatch = jsCode.match(/function cleanHtml\(str\)[\s\S]*?\n\}/);
 
-const match = jsCode.match(/function cleanHtml\(str\) \{[\s\S]*?\n\}/);
-if (!match) {
-  throw new Error('cleanHtml function not found in workflow.json');
-}
+  const sandbox = {};
+  vm.createContext(sandbox);
+  vm.runInContext(functionMatch[0], sandbox);
+  const cleanHtml = sandbox.cleanHtml;
 
-const cleanHtml = new Function('str', match[0] + '\nreturn cleanHtml(str);');
+  test('returns empty string for falsy values', () => {
+    expect(cleanHtml(null)).toBe('');
+    expect(cleanHtml(undefined)).toBe('');
+    expect(cleanHtml('')).toBe('');
+  });
 
-test('cleanHtml tests', async (t) => {
-    await t.test('returns empty string for falsy values', () => {
-        assert.strictEqual(cleanHtml(null), '');
-        assert.strictEqual(cleanHtml(undefined), '');
-        assert.strictEqual(cleanHtml(''), '');
-    });
+  test('removes basic HTML tags', () => {
+    expect(cleanHtml('<div>Hello</div>')).toBe('Hello');
+    expect(cleanHtml('<p>This is a <b>test</b>.</p>')).toBe('This is a test.');
+    expect(cleanHtml('<br/>Line 1<br>Line 2')).toBe('Line 1Line 2');
+  });
 
-    await t.test('removes basic HTML tags', () => {
-        assert.strictEqual(cleanHtml('<p>Hello</p>'), 'Hello');
-        assert.strictEqual(cleanHtml('<div><b>Bold</b> text</div>'), 'Bold text');
-    });
+  test('handles multiple HTML entities', () => {
+    expect(cleanHtml('Jack &amp; Jill')).toBe('Jack   Jill');
+    expect(cleanHtml('&lt;b&gt;bold&lt;/b&gt;')).toBe('b  bold  /b'.replace(/  /g, ' '));
+    expect(cleanHtml('This&nbsp;is&nbsp;a&nbsp;test')).toBe('This is a test');
+  });
 
-    await t.test('handles multiple HTML entities', () => {
-        assert.strictEqual(cleanHtml('Hello&nbsp;World'), 'Hello World');
-    });
+  test('trims leading and trailing whitespace', () => {
+    expect(cleanHtml('  Hello World  ')).toBe('Hello World');
+    expect(cleanHtml('\n\t  Test\n')).toBe('Test');
+    expect(cleanHtml(' <p>  Padded  </p> ')).toBe('Padded');
+  });
 
-    await t.test('trims leading and trailing whitespace', () => {
-        assert.strictEqual(cleanHtml('  Hello World  '), 'Hello World');
-        assert.strictEqual(cleanHtml(' <p>  Hello World  </p> '), 'Hello World');
-    });
-
-    await t.test('handles strings with only tags and spaces', () => {
-        assert.strictEqual(cleanHtml(' <p> </p> '), '');
-    });
+  test('handles strings with only tags and spaces', () => {
+    expect(cleanHtml('  <b>  </b>  ')).toBe('');
+    expect(cleanHtml('<div> \n </div>')).toBe('');
+  });
 });
